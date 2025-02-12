@@ -1,4 +1,5 @@
 {
+  "name": "blaze-cardano",
   "workspaces": [
     "packages/*"
   ],
