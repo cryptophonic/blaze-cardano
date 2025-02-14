@@ -61,6 +61,10 @@ export class DevnetProvider extends Provider {
       if (cm === "plutus:v3") key = PlutusLanguageVersion.V3
       costModels.set(key, obj.plutusCostModels[cm])
     })
+    const parseRatio = (ratio) => {
+      const [numerator, denominator] = ratio.split("/").map(Number)
+      return numerator / denominator
+    }
     return {
       coinsPerUtxoByte: obj.minUtxoDepositCoefficient,
       maxTxSize: obj.maxTransactionSize.bytes,
@@ -80,21 +84,19 @@ export class DevnetProvider extends Provider {
       maxValueSize: obj.maxValueSize.bytes,
       collateralPercentage: obj.collateralPercentage,
       maxCollateralInputs: obj.maxCollateralInputs,
-      costModels: costModels
-      /*
+      costModels: costModels,
       prices: {
-        memory: parseRatio(params.script_execution_prices.memory),
-        steps: parseRatio(params.script_execution_prices.cpu),
+        memory: parseRatio(obj.scriptExecutionPrices.memory),
+        steps: parseRatio(obj.scriptExecutionPrices.cpu),
       },
       maxExecutionUnitsPerTransaction: {
-        memory: params.max_execution_units_per_transaction.memory,
-        steps: params.max_execution_units_per_transaction.cpu,
+        memory: obj.maxExecutionUnitsPerTransaction.memory,
+        steps: obj.maxExecutionUnitsPerTransaction.cpu,
       },
       maxExecutionUnitsPerBlock: {
-        memory: params.max_execution_units_per_block.memory,
-        steps: params.max_execution_units_per_block.cpu,
+        memory: obj.maxExecutionUnitsPerBlock.memory,
+        steps: obj.maxExecutionUnitsPerBlock.cpu,
       },
-      */
     } 
   }
 
