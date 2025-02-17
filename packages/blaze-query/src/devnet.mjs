@@ -1,7 +1,19 @@
 import WebSocket from "ws"
 
 import { Provider } from "../dist/index.js"
-import { PlutusLanguageVersion } from "../../blaze-core/dist/index.js"
+import { 
+  PlutusLanguageVersion,
+  Address,
+  Datum,
+  DatumHash,
+  HexBlob,
+  PlutusData,
+  TransactionId,
+  TransactionInput,
+  TransactionOutput,
+  TransactionUnspentOutput,
+  Value
+ } from "../../blaze-core/dist/index.js"
 
 export class DevnetProvider extends Provider {
 
@@ -46,7 +58,43 @@ export class DevnetProvider extends Provider {
     })
   }
 
+  buildTransactionUnspentOutput(utxo) {
+    const txIn = new TransactionInput(
+      TransactionId(utxo.txHash),
+      BigInt(utxo.outputIndex)
+    )
+    // No tx output CBOR available
+    // so TransactionOutput must be manually constructed.
+    const tokenMap = new Map
+    let lovelace = 0n;
+    Object.keys(utxo.assets).map(k => {
+      const quantity = utxo.assets[k]
+      if (k === "lovelace") {
+        lovelace = BigInt(quantity)
+      } else {
+        tokenMap.set(k, BigInt(quantity))
+
+      }
+    })
+    const txOut = new TransactionOutput(
+      utxo.address,
+      new Value(lovelace, tokenMap),
+    )
+    if (utxo.datum !== undefined) {
+      const datum = Datum.newInlineData(PlutusData.fromCbor(HexBlob(utxo.datum)))
+      txOut.setDatum(datum)
+    } else if (utxo.datumHash !== undefined) {
+      const datum = Datum.newDataHash(DatumHash(utxo.datumHash))
+      txOut.setDatum(datum)
+    }
+    if (utxo.scriptRef !== undefined) {
+      txOut.setScriptRef()
+    }
+    return new TransactionUnspentOutput(txIn, txOut)
+  }
+
   async getParameters() {
+    console.log("DevnetProvider::getParameters")
     const obj = await this.query({
       method: "queryProtocolParameters"
     })
@@ -100,28 +148,55 @@ export class DevnetProvider extends Provider {
     } 
   }
 
-  getUnspentOutputs(address) {
+  async getUnspentOutputs(addressOrCredential) {
+    console.log("DevnetProvider::getUnspentOutputs")
+    const queryTarget = addressOrCredential instanceof Address ?
+      addressOrCredential.toBech32() : new Address({
+        type: AddressType.EnterpriseKey,
+        paymentPart: addressOrCredential.toCore()
+      }).toBech32()
+    const query = {
+      method: "getUtxos",
+      params: {
+        address: queryTarget
+      }
+    }
+    console.log(JSON.stringify(query, null, 2))
+    const obj = await this.query(query)
+    console.log(JSON.stringify(obj, null, 2))
+    const utxos = []
+    const ret = obj.map(utxo => {
+      return this.buildTransactionUnspentOutput(utxo)
+    })
+    return ret
   }
 
   getUnspentOutputsWithAsset(address, unit) {
+    console.log("DevnetProvider::getUnspentOutputsWithAsset")
   }
 
   getUnspentOutputByNFT(unit) {
+    console.log("DevnetProvider::getUnspentOutputsByNFT")
   }
 
   async resolveUnspentOutputs(txIns) {
+    console.log("DevnetProvider::resolveUnspentOutputs")
   }
 
   resolveDatum(datumHash) {
+    console.log("DevnetProvider::resolveDatum")
   }
 
   async awaitTransactionConfirmation(txId, timeout) {
+    console.log("DevnetProvider::awaitTransactionConfirmation")
   }
 
   async postTransactionToChain(tx) {
+    console.log("DevnetProvider::postTransactionToChain")
   }
 
   async evaluateTransaction(tx, additionalUtxos) {
+    console.log("DevnetProvider::evaluateTransaction")
   }
 
 }
