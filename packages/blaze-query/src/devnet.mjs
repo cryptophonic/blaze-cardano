@@ -4,6 +4,7 @@ import { Provider } from "../dist/index.js"
 import { 
   PlutusLanguageVersion,
   Address,
+  AddressType,
   Datum,
   DatumHash,
   HexBlob,
@@ -77,13 +78,13 @@ export class DevnetProvider extends Provider {
       }
     })
     const txOut = new TransactionOutput(
-      utxo.address,
+      Address.fromBech32(utxo.address),
       new Value(lovelace, tokenMap),
     )
     if (utxo.datum !== undefined) {
       const datum = Datum.newInlineData(PlutusData.fromCbor(HexBlob(utxo.datum)))
       txOut.setDatum(datum)
-    } else if (utxo.datumHash !== undefined) {
+    } else if (utxo.datumHash !== null) {
       const datum = Datum.newDataHash(DatumHash(utxo.datumHash))
       txOut.setDatum(datum)
     }
@@ -148,17 +149,12 @@ export class DevnetProvider extends Provider {
     } 
   }
 
-  async getUnspentOutputs(addressOrCredential) {
-    console.log("DevnetProvider::getUnspentOutputs")
-    const queryTarget = addressOrCredential instanceof Address ?
-      addressOrCredential.toBech32() : new Address({
-        type: AddressType.EnterpriseKey,
-        paymentPart: addressOrCredential.toCore()
-      }).toBech32()
+  async getUnspentOutputs(address) {
+    console.log("DevnetProvider::getUnspentOutputs: " + address)
     const query = {
       method: "getUtxos",
       params: {
-        address: queryTarget
+        address: address
       }
     }
     console.log(JSON.stringify(query, null, 2))
