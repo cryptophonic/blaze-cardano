@@ -150,21 +150,21 @@ export class DevnetProvider extends Provider {
   }
 
   async getUnspentOutputs(address) {
-    console.log("DevnetProvider::getUnspentOutputs: " + address)
+    console.log("DevnetProvider::getUnspentOutputs")
+
     const query = {
       method: "getUtxos",
       params: {
-        address: address
+        address: address.toBech32()
       }
     }
     console.log(JSON.stringify(query, null, 2))
     const obj = await this.query(query)
     console.log(JSON.stringify(obj, null, 2))
-    const utxos = []
-    const ret = obj.map(utxo => {
+    const utxos = obj.map(utxo => {
       return this.buildTransactionUnspentOutput(utxo)
     })
-    return ret
+    return utxos
   }
 
   getUnspentOutputsWithAsset(address, unit) {
